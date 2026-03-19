@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@300;400;500;700&display=swap');
+@import "tailwindcss";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --mckinsey-blue: #002D72;
+  /* Darker navy often used for deep backgrounds */
+  --mckinsey-bright-blue: #2251FF;
+  /* The "Blue Ribbon" highlight color */
+  --mckinsey-light-gray: #F5F5f5;
+  --mckinsey-dark-gray: #333333;
+}
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #ffffff;
+  color: var(--mckinsey-dark-gray);
+  margin: 0;
+}
+
+/* Typography styles to mimic McKinsey's Bower and McKinsey Sans */
+.font-serif-heading {
+  font-family: 'Merriweather', Georgia, serif;
+}
+
+.font-sans-body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Shared utilities */
+.mckinsey-border-top {
+  border-top: 4px solid var(--mckinsey-bright-blue);
+}
+
+.mckinsey-border-left {
+  border-left: 4px solid var(--mckinsey-bright-blue);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cccccc;
+  border-radius: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  border-spacing: 0;
+}
