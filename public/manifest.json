@@ -1,0 +1,19 @@
+{
+  "name": "BizLens — AI Business Intelligence",
+  "short_name": "BizLens",
+  "description": "Upload any dataset and receive consulting-grade strategic analysis powered by DuckDB and Claude AI — entirely in your browser.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#2251FF",
+  "background_color": "#ffffff",
+  "orientation": "landscape-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"]
+}

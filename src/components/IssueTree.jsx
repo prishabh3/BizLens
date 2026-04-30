@@ -14,6 +14,8 @@ function BranchRow({ branch }) {
             <button
                 className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition-colors text-left"
                 onClick={() => setOpen((o) => !o)}
+                aria-expanded={open}
+                aria-label={`${branch.label} — ${branch.severity} severity. ${open ? 'Collapse' : 'Expand'}`}
             >
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${s.badge}`}>
                     {branch.severity.toUpperCase()}
@@ -29,7 +31,6 @@ function BranchRow({ branch }) {
             </button>
             {open && branch.leaves && branch.leaves.length > 0 && (
                 <div className="px-5 pb-4 space-y-2 border-t border-gray-50">
-                    <p className="text-xs text-gray-500 mt-3 font-medium">{branch.description}</p>
                     {branch.leaves.map((leaf, i) => (
                         <div key={i} className="flex items-start gap-2 ml-4">
                             <span className="text-gray-300 font-bold mt-0.5">→</span>

@@ -9,23 +9,20 @@
 }
 
 :root {
-  --mckinsey-blue: #002D72;
-  /* Darker navy often used for deep backgrounds */
-  --mckinsey-bright-blue: #2251FF;
-  /* The "Blue Ribbon" highlight color */
-  --mckinsey-light-gray: #F5F5f5;
-  --mckinsey-dark-gray: #333333;
+  --bizlens-navy: #002D72;
+  --bizlens-blue: #2251FF;
+  --bizlens-light-gray: #F5F5F5;
+  --bizlens-dark-gray: #333333;
 }
 
 body {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   background: #ffffff;
-  color: var(--mckinsey-dark-gray);
+  color: var(--bizlens-dark-gray);
   margin: 0;
 }
 
-/* Typography styles to mimic McKinsey's Bower and McKinsey Sans */
 .font-serif-heading {
   font-family: 'Merriweather', Georgia, serif;
 }
@@ -34,13 +31,12 @@ body {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-/* Shared utilities */
-.mckinsey-border-top {
-  border-top: 4px solid var(--mckinsey-bright-blue);
+.bizlens-border-top {
+  border-top: 4px solid var(--bizlens-blue);
 }
 
-.mckinsey-border-left {
-  border-left: 4px solid var(--mckinsey-bright-blue);
+.bizlens-border-left {
+  border-left: 4px solid var(--bizlens-blue);
 }
 
 ::-webkit-scrollbar {
