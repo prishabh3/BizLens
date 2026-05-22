@@ -140,7 +140,9 @@ function JoinConfig({ parsed1, parsed2, joinConfig, onChange }) {
 export default function FileUpload({ onFileReady, onAnalyze, isLoading, duckDBReady, cachedSession, onRestoreSession }) {
   const [dragging, setDragging] = useState(false);
   const [parsed, setParsed] = useState(null);
+  const [rawFile, setRawFile] = useState(null);
   const [parsed2, setParsed2] = useState(null);
+  const [rawFile2, setRawFile2] = useState(null);
   const [sector, setSector] = useState(SECTORS[0]);
   const [pasteMode, setPasteMode] = useState(false);
   const [pasteText, setPasteText] = useState('');
@@ -159,17 +161,31 @@ export default function FileUpload({ onFileReady, onAnalyze, isLoading, duckDBRe
     const { dispatchFile } = await import('../lib/fileParser');
     const result = await dispatchFile(file);
     if (isSecond) {
+      setRawFile2(file);
       setParsed2(result);
-      // Auto-detect common key
       if (parsed) {
         const common = parsed.columns.filter((c) => result.columns.includes(c));
         if (common.length > 0) setJoinConfig((j) => ({ ...j, key1: common[0], key2: common[0] }));
       }
     } else {
+      setRawFile(file);
       setParsed(result);
       onFileReady(result);
     }
   }, [onFileReady, parsed]);
+
+  const handleSheetChange = useCallback(async (sheetName, isSecond = false) => {
+    const file = isSecond ? rawFile2 : rawFile;
+    if (!file) return;
+    const { dispatchFile } = await import('../lib/fileParser');
+    const result = await dispatchFile(file, sheetName);
+    if (isSecond) {
+      setParsed2(result);
+    } else {
+      setParsed(result);
+      onFileReady(result);
+    }
+  }, [rawFile, rawFile2, onFileReady]);
 
   const handlePasteSubmit = async () => {
     const { parseText } = await import('../lib/fileParser');
@@ -206,9 +222,12 @@ export default function FileUpload({ onFileReady, onAnalyze, isLoading, duckDBRe
     setLoadingExample(true);
     try {
       const resp = await fetch('/sample_hospital.csv');
+      if (!resp.ok) throw new Error(`Failed to load sample dataset (HTTP ${resp.status})`);
       const text = await resp.text();
       const file = new File([text], 'sample_hospital.csv', { type: 'text/csv' });
       await handleFiles([file]);
+    } catch (e) {
+      console.error('Failed to load example dataset:', e);
     } finally {
       setLoadingExample(false);
     }
@@ -409,6 +428,22 @@ export default function FileUpload({ onFileReady, onAnalyze, isLoading, duckDBRe
                 </button>
               )}
             </div>
+
+            {/* Sheet picker — shown when the Excel file has multiple sheets */}
+            {parsed?.sheetNames?.length > 1 && (
+              <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 px-4 py-2.5">
+                <span className="text-[11px] font-bold text-blue-700 uppercase tracking-widest flex-shrink-0">Sheet</span>
+                <select
+                  value={parsed.activeSheet}
+                  onChange={(e) => handleSheetChange(e.target.value, false)}
+                  className="flex-1 border border-blue-300 bg-white px-3 py-1.5 text-[13px] focus:outline-none focus:border-[#2251FF] rounded-none"
+                  aria-label="Select Excel sheet"
+                >
+                  {parsed.sheetNames.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <span className="text-[10px] text-blue-500">{parsed.sheetNames.length} sheets</span>
+              </div>
+            )}
 
             {/* Data preview */}
             {parsed && parsed.rows.length > 0 && (

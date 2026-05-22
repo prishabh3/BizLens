@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useAnalysisCtx } from '../context/AnalysisContext';
 
 function CodeBlock({ code }) {
@@ -27,7 +28,7 @@ function Section({ title, children }) {
 }
 
 function computeDataQuality(dataProfile) {
-  if (!dataProfile) return null;
+  if (!dataProfile?.columns) return null;
   const cols = Object.values(dataProfile.columns);
   const numericCount = cols.filter((c) => c.type === 'numeric').length;
   const dateCount = cols.filter((c) => c.type === 'date').length;
@@ -109,9 +110,16 @@ export default function Methodology() {
     </div>
   );
 
-  const numericCols = Object.entries(dataProfile.columns).filter(([, v]) => v.type === 'numeric');
-  const dateCols = Object.entries(dataProfile.columns).filter(([, v]) => v.type === 'date');
-  const categoricalCols = Object.entries(dataProfile.columns).filter(([, v]) => v.type === 'categorical');
+  const hasCols = !!dataProfile.columns;
+  const { numericCols, dateCols, categoricalCols } = useMemo(() => {
+    if (!hasCols) return { numericCols: [], dateCols: [], categoricalCols: [] };
+    const entries = Object.entries(dataProfile.columns);
+    return {
+      numericCols: entries.filter(([, v]) => v.type === 'numeric'),
+      dateCols: entries.filter(([, v]) => v.type === 'date'),
+      categoricalCols: entries.filter(([, v]) => v.type === 'categorical'),
+    };
+  }, [dataProfile.columns, hasCols]);
 
   const profilingSQL = `-- Row count
 SELECT COUNT(*) as cnt FROM dataset;
@@ -181,7 +189,7 @@ FROM numbered;` : ''}`;
       </Section>
 
       {/* Column type inference */}
-      <Section title="Column Type Inference">
+      {hasCols && <Section title="Column Type Inference">
         <p className="text-[12px] text-gray-500">
           BizLens infers column types from values — not just column names. Date columns are detected via 8 regex patterns (ISO 8601, MM/DD/YYYY, YYYY-Qn, etc.).
           Numeric detection checks that all non-null values parse as numbers.
@@ -204,7 +212,7 @@ FROM numbered;` : ''}`;
             </div>
           ))}
         </div>
-      </Section>
+      </Section>}
 
       {/* Anomalies */}
       {dataProfile.anomalies?.length > 0 && (

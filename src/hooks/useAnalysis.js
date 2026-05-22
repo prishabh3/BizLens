@@ -30,6 +30,9 @@ export function useAnalysis(conn) {
       const hasJoin = !!(data.secondDataset && data.joinConfig?.key1 && data.joinConfig?.key2);
       await loadDataset(conn, data.columns, data.rows, hasJoin ? 'dataset1' : 'dataset');
 
+      let profileColumns = data.columns;
+      let profileRows = data.rows;
+
       if (hasJoin) {
         const { secondDataset, joinConfig } = data;
         await loadDataset(conn, secondDataset.columns, secondDataset.rows, 'dataset2');
@@ -50,10 +53,15 @@ export function useAnalysis(conn) {
           ${joinConfig.type} JOIN dataset2 AS d2
             ON d1."${joinConfig.key1}" = d2."${joinConfig.key2}"
         `);
+
+        const { runQuery } = await import('../lib/duckdb');
+        const joinedRows = await runQuery(conn, 'SELECT * FROM dataset LIMIT 200');
+        profileColumns = joinedRows.length > 0 ? Object.keys(joinedRows[0]) : profileColumns;
+        profileRows = joinedRows;
       }
 
       const t1 = performance.now();
-      const profile = await runProfileQueries(conn, data.columns, data.rows);
+      const profile = await runProfileQueries(conn, profileColumns, profileRows);
       const t2 = performance.now();
       setDataProfile(profile);
 
@@ -61,8 +69,8 @@ export function useAnalysis(conn) {
       const result = await analyzeWithClaude(
         selectedSector,
         profile,
-        data.columns,
-        data.rows.slice(0, 5),
+        profileColumns,
+        profileRows.slice(0, 5),
         (partial) => {
           if (partial) setAnalysisResult(partial);
           if (firstTokenTime === null) firstTokenTime = performance.now();
@@ -79,7 +87,7 @@ export function useAnalysis(conn) {
         totalMs: Math.round(t3 - t0),
       });
 
-      saveSession({ analysisResult: result, dataProfile: profile, sector: selectedSector, columns: data.columns });
+      saveSession({ analysisResult: result, dataProfile: profile, sector: selectedSector, columns: profileColumns });
 
       return { result, profile };
     } catch (e) {

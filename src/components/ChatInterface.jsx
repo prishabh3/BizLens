@@ -184,11 +184,15 @@ export default function ChatInterface() {
     const trimmed = (text || input).trim();
     if (!trimmed || loading) return;
     setInput('');
+    const isRetry = !!retryMsg;
     setRetryMsg(null);
 
     const userMsg = { role: 'user', content: trimmed };
-    const newHistory = [...messages.filter((m) => m.role !== undefined), userMsg];
-    setMessages((prev) => [...prev, { ...userMsg, displayContent: trimmed }]);
+    const baseMessages = isRetry
+      ? messages.slice(0, -2)
+      : messages;
+    const newHistory = [...baseMessages.filter((m) => m.role !== undefined), userMsg];
+    setMessages((prev) => [...(isRetry ? prev.slice(0, -2) : prev), { ...userMsg, displayContent: trimmed }]);
     setLoading(true);
 
     try {

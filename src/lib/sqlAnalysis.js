@@ -15,13 +15,13 @@ const DATE_PATTERNS = [
   /^\d{4}-(0[1-9]|1[0-2])$/,                     // 2023-01 (year-month)
 ];
 
-function isNumericColumn(column, rows) {
+export function isNumericColumn(column, rows) {
   const values = rows.map((r) => r[column]).filter((v) => v !== null && v !== undefined && v !== '');
   if (values.length === 0) return false;
   return values.every((v) => typeof v === 'number' || (!isNaN(Number(v)) && String(v).trim() !== ''));
 }
 
-function isDateColumn(column, rows) {
+export function isDateColumn(column, rows) {
   const values = rows
     .map((r) => r[column])
     .filter((v) => v !== null && v !== undefined && v !== '' && typeof v === 'string')

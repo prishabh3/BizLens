@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend,
@@ -172,15 +173,19 @@ function NumericDistributionChart({ colName, colData }) {
 }
 
 export default function DataCharts({ dataProfile, analysisResult }) {
+  const numericCols = useMemo(() => (
+    dataProfile?.columns
+      ? Object.entries(dataProfile.columns).filter(([, v]) => v.type === 'numeric').slice(0, 6)
+      : []
+  ), [dataProfile?.columns]);
+
+  const categoricalCols = useMemo(() => (
+    dataProfile?.columns
+      ? Object.entries(dataProfile.columns).filter(([, v]) => v.type === 'categorical' && v.topValues?.length > 1).slice(0, 3)
+      : []
+  ), [dataProfile?.columns]);
+
   if (!dataProfile) return null;
-
-  const numericCols = Object.entries(dataProfile.columns)
-    .filter(([, v]) => v.type === 'numeric')
-    .slice(0, 6);
-
-  const categoricalCols = Object.entries(dataProfile.columns)
-    .filter(([, v]) => v.type === 'categorical' && v.topValues?.length > 1)
-    .slice(0, 3);
 
   return (
     <div className="space-y-10">

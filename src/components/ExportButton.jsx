@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 
 function formatDate() {
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -52,7 +54,105 @@ function bodyText(doc, text, x, y, maxWidth) {
   return y + lines.length * 4.5;
 }
 
+function exportToExcel(analysisResult, dataProfile, sector) {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: KPIs
+  if (analysisResult.kpis?.length) {
+    const kpiRows = analysisResult.kpis.map((k) => ({
+      'KPI Name': k.name,
+      'Value': k.value,
+      'Benchmark': k.benchmark,
+      'Status': k.status,
+      'Delta vs Benchmark': k.delta,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpiRows), 'KPIs');
+  }
+
+  // Sheet 2: Recommendations
+  if (analysisResult.recommendations?.length) {
+    const recRows = analysisResult.recommendations.map((r) => ({
+      'Title': r.title,
+      'Impact': r.impact,
+      'Situation': r.situation,
+      'Complication': r.complication,
+      'Resolution': r.resolution,
+      'Expected Metric': r.metric,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(recRows), 'Recommendations');
+  }
+
+  // Sheet 3: Hypotheses
+  if (analysisResult.hypotheses?.length) {
+    const hypRows = analysisResult.hypotheses.map((h) => ({
+      'Title': h.title,
+      'Description': h.description,
+      'Confidence %': h.confidence,
+      'Evidence': h.evidence,
+      'Data Gap': h.dataGap,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hypRows), 'Hypotheses');
+  }
+
+  // Sheet 4: SWOT
+  const swot = analysisResult.swot;
+  if (swot) {
+    const maxLen = Math.max(
+      swot.strengths?.length ?? 0,
+      swot.weaknesses?.length ?? 0,
+      swot.opportunities?.length ?? 0,
+      swot.threats?.length ?? 0,
+    );
+    const swotRows = Array.from({ length: maxLen }, (_, i) => ({
+      'Strengths': swot.strengths?.[i] ?? '',
+      'Weaknesses': swot.weaknesses?.[i] ?? '',
+      'Opportunities': swot.opportunities?.[i] ?? '',
+      'Threats': swot.threats?.[i] ?? '',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(swotRows), 'SWOT');
+  }
+
+  // Sheet 5: Scenarios
+  if (analysisResult.scenarios?.length) {
+    const scenRows = analysisResult.scenarios.map((s) => ({
+      'Scenario': s.name,
+      'Assumption': s.assumption,
+      'Projected Impact': s.projectedImpact,
+      'Likelihood': s.likelihood,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(scenRows), 'Scenarios');
+  }
+
+  // Sheet 6: Dataset Profile
+  if (dataProfile) {
+    const metaRows = [
+      { Field: 'Sector', Value: sector || '—' },
+      { Field: 'Row Count', Value: dataProfile.rowCount },
+      { Field: 'Column Count', Value: dataProfile.columnCount },
+      { Field: 'Anomalies', Value: dataProfile.anomalies?.length ?? 0 },
+      { Field: 'KPI Columns', Value: (dataProfile.kpiColumns ?? []).join(', ') },
+      { Field: 'Date Columns', Value: (dataProfile.dateColumns ?? []).join(', ') },
+      { Field: 'Forecast R²', Value: dataProfile.forecast?.r2 ?? '—' },
+      { Field: 'Problem Statement', Value: analysisResult.problemStatement },
+      { Field: 'Executive Summary', Value: analysisResult.executiveSummary },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(metaRows), 'Summary');
+  }
+
+  const date = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `BizLens_Report_${date}.xlsx`);
+}
+
 export default function ExportButton({ analysisResult, dataProfile, sector }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   const handleExport = () => {
     if (!analysisResult) return;
 
@@ -304,15 +404,48 @@ export default function ExportButton({ analysisResult, dataProfile, sector }) {
   };
 
   return (
-    <button
-      onClick={handleExport}
-      disabled={!analysisResult}
-      className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white text-[12px] font-bold uppercase tracking-wider hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-      Export PDF
-    </button>
+    <div className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        disabled={!analysisResult}
+        aria-haspopup="true"
+        aria-expanded={open}
+        className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white text-[12px] font-bold uppercase tracking-wider hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Export
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 shadow-lg min-w-[140px]">
+            <button
+              onClick={() => { handleExport(); setOpen(false); }}
+              className="w-full text-left px-4 py-2.5 text-[12px] text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            >
+              <svg className="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Export PDF
+            </button>
+            <button
+              onClick={() => { exportToExcel(analysisResult, dataProfile, sector); setOpen(false); }}
+              className="w-full text-left px-4 py-2.5 text-[12px] text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100"
+            >
+              <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export Excel
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

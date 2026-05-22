@@ -2,8 +2,15 @@ import * as duckdb from '@duckdb/duckdb-wasm';
 
 let dbInstance = null;
 let connInstance = null;
+let initPromise = null;
 
-export async function initDuckDB() {
+export function initDuckDB() {
+    if (initPromise) return initPromise;
+    initPromise = _doInitDuckDB();
+    return initPromise;
+}
+
+async function _doInitDuckDB() {
     if (dbInstance && connInstance) {
         return { db: dbInstance, conn: connInstance };
     }
@@ -30,6 +37,7 @@ export async function initDuckDB() {
 
     return { db, conn };
 }
+
 
 export async function runQuery(conn, sql) {
     try {
