@@ -212,7 +212,11 @@ export default function FileUpload({ onFileReady, onAnalyze, isLoading, duckDBRe
       setUrlMode(false);
       setUrlInput('');
     } catch (e) {
-      setUrlError(e.message);
+      if (e instanceof TypeError) {
+        setUrlError('Could not fetch the URL — the server may block cross-origin requests (CORS). Download the file and upload it directly instead.');
+      } else {
+        setUrlError(e.message);
+      }
     } finally {
       setUrlLoading(false);
     }
@@ -381,6 +385,20 @@ export default function FileUpload({ onFileReady, onAnalyze, isLoading, duckDBRe
                   parsed={parsed2}
                   onFiles={(files) => handleFiles(files, true)}
                 />
+                {parsed2?.sheetNames?.length > 1 && (
+                  <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 px-4 py-2.5 mt-2">
+                    <span className="text-[11px] font-bold text-blue-700 uppercase tracking-widest flex-shrink-0">Sheet</span>
+                    <select
+                      value={parsed2.activeSheet}
+                      onChange={(e) => handleSheetChange(e.target.value, true)}
+                      className="flex-1 border border-blue-300 bg-white px-3 py-1.5 text-[13px] focus:outline-none focus:border-[#2251FF] rounded-none"
+                      aria-label="Select Excel sheet for File 2"
+                    >
+                      {parsed2.sheetNames.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <span className="text-[10px] text-blue-500">{parsed2.sheetNames.length} sheets</span>
+                  </div>
+                )}
               </div>
             )}
 

@@ -110,7 +110,6 @@ export async function runProfileQueries(conn, columns, rows) {
           PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY ${safeCol}) as p25,
           PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY ${safeCol}) as p75
         FROM dataset
-        WHERE ${safeCol} IS NOT NULL
       `;
       const stats = await runQuery(conn, statsSQL);
       if (stats.length > 0) {
