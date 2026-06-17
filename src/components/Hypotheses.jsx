@@ -1,15 +1,19 @@
-function ConfidenceBar({ value }) {
-    const color = value > 65 ? 'bg-emerald-500' : value >= 40 ? 'bg-amber-500' : 'bg-red-500';
-    const textColor = value > 65 ? 'text-emerald-700' : value >= 40 ? 'text-amber-700' : 'text-red-700';
+function confidenceTier(value) {
+    if (value > 65) return { accent: 'border-l-emerald-500', bar: 'bg-emerald-500', text: 'text-emerald-700' };
+    if (value >= 40) return { accent: 'border-l-amber-500', bar: 'bg-amber-500', text: 'text-amber-700' };
+    return { accent: 'border-l-red-500', bar: 'bg-red-500', text: 'text-red-700' };
+}
+
+function ConfidenceBar({ value, tier }) {
     return (
-        <div className="space-y-1">
+        <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-medium">Confidence</span>
-                <span className={`text-xs font-bold ${textColor}`}>{value}%</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Confidence</span>
+                <span className={`text-[12px] font-bold ${tier.text}`}>{value}%</span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className="w-full bg-gray-100 h-1.5">
                 <div
-                    className={`h-2 rounded-full transition-all duration-500 ${color}`}
+                    className={`h-1.5 transition-all duration-500 ${tier.bar}`}
                     style={{ width: `${Math.min(value, 100)}%` }}
                 />
             </div>
@@ -20,31 +24,37 @@ function ConfidenceBar({ value }) {
 export default function Hypotheses({ hypotheses }) {
     if (!hypotheses || hypotheses.length === 0) return null;
     return (
-        <div className="space-y-4">
-            {hypotheses.map((h, i) => (
-                <div key={i} className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-start gap-3 mb-4">
-                        <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                            H{i + 1}
+        <div className="space-y-2.5">
+            {hypotheses.map((h, i) => {
+                const tier = confidenceTier(h.confidence);
+                const num = String(i + 1).padStart(2, '0');
+                return (
+                    <div key={i} className={`bg-white border border-gray-200 border-l-4 ${tier.accent} p-5`}>
+                        <div className="flex items-start gap-4 mb-4">
+                            <span className="font-serif-heading text-2xl font-bold text-gray-200 leading-none tabular-nums mt-0.5">
+                                {num}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="font-serif-heading font-bold text-gray-900 text-[15px] leading-snug">{h.title}</h4>
+                                <p className="text-[13px] text-gray-600 mt-1 leading-relaxed">{h.description}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 className="font-bold text-gray-900 text-sm leading-snug">{h.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{h.description}</p>
+
+                        <ConfidenceBar value={h.confidence} tier={tier} />
+
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-px bg-gray-100 border border-gray-100">
+                            <div className="bg-white p-4">
+                                <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1.5">Evidence</p>
+                                <p className="text-[12px] text-gray-700 leading-relaxed">{h.evidence}</p>
+                            </div>
+                            <div className="bg-white p-4">
+                                <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-1.5">Data Gap</p>
+                                <p className="text-[12px] text-gray-700 leading-relaxed">{h.dataGap}</p>
+                            </div>
                         </div>
                     </div>
-                    <ConfidenceBar value={h.confidence} />
-                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-emerald-50 rounded-lg p-3">
-                            <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-1">Evidence</p>
-                            <p className="text-xs text-gray-700">{h.evidence}</p>
-                        </div>
-                        <div className="bg-amber-50 rounded-lg p-3">
-                            <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-1">Data Gap</p>
-                            <p className="text-xs text-gray-700">{h.dataGap}</p>
-                        </div>
-                    </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 }

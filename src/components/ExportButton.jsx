@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
 
 function formatDate() {
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -54,7 +52,8 @@ function bodyText(doc, text, x, y, maxWidth) {
   return y + lines.length * 4.5;
 }
 
-function exportToExcel(analysisResult, dataProfile, sector) {
+async function exportToExcel(analysisResult, dataProfile, sector) {
+  const XLSX = await import('xlsx');
   const wb = XLSX.utils.book_new();
 
   // Sheet 1: KPIs
@@ -153,9 +152,10 @@ export default function ExportButton({ analysisResult, dataProfile, sector }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!analysisResult) return;
 
+    const { default: jsPDF } = await import('jspdf');
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pw = doc.internal.pageSize.getWidth();
     const ph = doc.internal.pageSize.getHeight();

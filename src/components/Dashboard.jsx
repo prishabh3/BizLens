@@ -1,15 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import MetricCards from './MetricCards';
 import IssueTree from './IssueTree';
 import Hypotheses from './Hypotheses';
 import Recommendations from './Recommendations';
-import ChatInterface from './ChatInterface';
 import ExportButton from './ExportButton';
-import DataCharts from './DataCharts';
-import Forecasting from './Forecasting';
 import SWOTPorter from './SWOTPorter';
 import Methodology from './Methodology';
 import { useAnalysisCtx } from '../context/AnalysisContext';
+
+// Recharts-heavy panels — loaded only when their tab is opened so the
+// initial dashboard paint doesn't pull in the charting bundle.
+const DataCharts = lazy(() => import('./DataCharts'));
+const Forecasting = lazy(() => import('./Forecasting'));
+const ChatInterface = lazy(() => import('./ChatInterface'));
 
 const TABS = [
   { id: 'issueTree',       label: 'Issue Tree' },
@@ -435,15 +438,22 @@ export default function Dashboard({ onNewAnalysis, streamingText, onRetry, lastE
               aria-labelledby={`tab-${activeTab}`}
               className={`p-8 border border-gray-200 ${activeTab === 'chat' ? 'bg-white' : 'bg-[#F5F5F5]'}`}
             >
-              {activeTab === 'issueTree'       && <IssueTree issueTree={analysisResult?.issueTree} />}
-              {activeTab === 'hypotheses'      && <Hypotheses hypotheses={analysisResult?.hypotheses} />}
-              {activeTab === 'recommendations' && <Recommendations recommendations={analysisResult?.recommendations} />}
-              {activeTab === 'swotPorter'      && <SWOTPorter analysisResult={analysisResult} />}
-              {activeTab === 'scenarios'       && <SWOTPorter analysisResult={{ scenarios: analysisResult?.scenarios }} />}
-              {activeTab === 'forecast'        && <Forecasting forecast={dataProfile?.forecast} />}
-              {activeTab === 'charts'          && <DataCharts dataProfile={dataProfile} analysisResult={analysisResult} />}
-              {activeTab === 'methodology'     && <Methodology />}
-              {activeTab === 'chat'            && <ChatInterface />}
+              <Suspense fallback={
+                <div className="flex items-center gap-3 py-12 justify-center" aria-busy="true">
+                  <span className="w-4 h-4 border-2 border-[#2251FF] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                  <span className="text-[13px] text-gray-500 font-medium">Loading…</span>
+                </div>
+              }>
+                {activeTab === 'issueTree'       && <IssueTree issueTree={analysisResult?.issueTree} />}
+                {activeTab === 'hypotheses'      && <Hypotheses hypotheses={analysisResult?.hypotheses} />}
+                {activeTab === 'recommendations' && <Recommendations recommendations={analysisResult?.recommendations} />}
+                {activeTab === 'swotPorter'      && <SWOTPorter analysisResult={analysisResult} />}
+                {activeTab === 'scenarios'       && <SWOTPorter analysisResult={{ scenarios: analysisResult?.scenarios }} />}
+                {activeTab === 'forecast'        && <Forecasting forecast={dataProfile?.forecast} />}
+                {activeTab === 'charts'          && <DataCharts dataProfile={dataProfile} analysisResult={analysisResult} />}
+                {activeTab === 'methodology'     && <Methodology />}
+                {activeTab === 'chat'            && <ChatInterface />}
+              </Suspense>
             </div>
           )}
         </section>

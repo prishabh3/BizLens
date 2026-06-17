@@ -16,6 +16,18 @@ function extractSQL(text) {
   return selectMatch ? selectMatch[1].trim() : null;
 }
 
+// The chat runs LLM-authored SQL directly against the live DuckDB table.
+// Restrict execution to a single read-only statement so a stray DROP / UPDATE /
+// INSERT can never mutate or destroy the in-session dataset.
+function isReadOnlySQL(sql) {
+  // Strip trailing semicolon, reject anything with a second statement.
+  const trimmed = sql.replace(/;\s*$/, '').trim();
+  if (trimmed.includes(';')) return false;
+  if (!/^(SELECT|WITH)\b/i.test(trimmed)) return false;
+  // Block mutating / DDL keywords as whole words anywhere in the statement.
+  return !/\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|REPLACE|TRUNCATE|ATTACH|COPY|INSTALL|LOAD|PRAGMA|SET|CALL|EXPORT)\b/i.test(trimmed);
+}
+
 function isNumeric(v) {
   return v !== null && v !== undefined && !isNaN(Number(v)) && String(v).trim() !== '';
 }
@@ -201,7 +213,7 @@ export default function ChatInterface() {
 
       let sqlResult;
       const sql = extractSQL(reply);
-      if (sql && conn) {
+      if (sql && conn && isReadOnlySQL(sql)) {
         try {
           sqlResult = await runQuery(conn, sql);
         } catch {
